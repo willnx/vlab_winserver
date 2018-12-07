@@ -57,44 +57,47 @@ class WinServerView(TaskView):
                     }
 
 
-    @requires(verify=False, version=(1,2))
+    @requires(verify=const.VLAB_VERIFY_TOKEN, version=2)
     @describe(post=POST_SCHEMA, delete=DELETE_SCHEMA, get=GET_SCHEMA)
     def get(self, *args, **kwargs):
         """Display the WinServer instances you own"""
         username = kwargs['token']['username']
+        txn_id = request.headers.get('X-REQUEST-ID', 'noId')
         resp_data = {'user' : username}
-        task = current_app.celery_app.send_task('winserver.show', [username])
+        task = current_app.celery_app.send_task('winserver.show', [username, txn_id])
         resp_data['content'] = {'task-id': task.id}
         resp = Response(ujson.dumps(resp_data))
         resp.status_code = 202
         resp.headers.add('Link', '<{0}{1}/task/{2}>; rel=status'.format(const.VLAB_URL, self.route_base, task.id))
         return resp
 
-    @requires(verify=False, version=(1,2)) # XXX remove verify=False before commit
+    @requires(verify=const.VLAB_VERIFY_TOKEN, version=2)
     @validate_input(schema=POST_SCHEMA)
     def post(self, *args, **kwargs):
         """Create a WinServer"""
         username = kwargs['token']['username']
+        txn_id = request.headers.get('X-REQUEST-ID', 'noId')
         resp_data = {'user' : username}
         body = kwargs['body']
         machine_name = body['name']
         image = body['image']
         network = body['network']
-        task = current_app.celery_app.send_task('winserver.create', [username, machine_name, image, network])
+        task = current_app.celery_app.send_task('winserver.create', [username, machine_name, image, network, txn_id])
         resp_data['content'] = {'task-id': task.id}
         resp = Response(ujson.dumps(resp_data))
         resp.status_code = 202
         resp.headers.add('Link', '<{0}{1}/task/{2}>; rel=status'.format(const.VLAB_URL, self.route_base, task.id))
         return resp
 
-    @requires(verify=False, version=(1,2)) # XXX remove verify=False before commit
+    @requires(verify=const.VLAB_VERIFY_TOKEN, version=2)
     @validate_input(schema=DELETE_SCHEMA)
     def delete(self, *args, **kwargs):
         """Destroy a WinServer"""
         username = kwargs['token']['username']
+        txn_id = request.headers.get('X-REQUEST-ID', 'noId')
         resp_data = {'user' : username}
         machine_name = kwargs['body']['name']
-        task = current_app.celery_app.send_task('winserver.delete', [username, machine_name])
+        task = current_app.celery_app.send_task('winserver.delete', [username, machine_name, txn_id])
         resp_data['content'] = {'task-id': task.id}
         resp = Response(ujson.dumps(resp_data))
         resp.status_code = 202
@@ -102,13 +105,14 @@ class WinServerView(TaskView):
         return resp
 
     @route('/image', methods=["GET"])
-    @requires(verify=False, version=(1,2))
+    @requires(verify=const.VLAB_VERIFY_TOKEN, version=2)
     @describe(get=IMAGES_SCHEMA)
     def image(self, *args, **kwargs):
         """Show available versions of WinServer that can be deployed"""
         username = kwargs['token']['username']
+        txn_id = request.headers.get('X-REQUEST-ID', 'noId')
         resp_data = {'user' : username}
-        task = current_app.celery_app.send_task('winserver.image')
+        task = current_app.celery_app.send_task('winserver.image', [txn_id])
         resp_data['content'] = {'task-id': task.id}
         resp = Response(ujson.dumps(resp_data))
         resp.status_code = 202
