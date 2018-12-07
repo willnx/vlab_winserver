@@ -104,6 +104,25 @@ class TestVMware(unittest.TestCase):
                                   network='someOtherLAN',
                                   logger=fake_logger)
 
+    @patch.object(vmware, 'Ova')
+    @patch.object(vmware.virtual_machine, 'get_info')
+    @patch.object(vmware.virtual_machine, 'deploy_from_ova')
+    @patch.object(vmware, 'consume_task')
+    @patch.object(vmware, 'vCenter')
+    def test_create_winserver_bad_image(self, fake_vCenter, fake_consume_task, fake_deploy_from_ova, fake_get_info, fake_Ova):
+        """``create_winserver`` raises ValueError if supplied with a non-existing version/image to deploy"""
+        fake_logger = MagicMock()
+        fake_get_info.return_value = {'worked': True}
+        fake_Ova.side_effect = FileNotFoundError('testing')
+        fake_vCenter.return_value.__enter__.return_value.networks = {'someLAN' : vmware.vim.Network(moId='1')}
+
+        with self.assertRaises(ValueError):
+            vmware.create_winserver(username='alice',
+                                  machine_name='WinServerBox',
+                                  image='1.0.0',
+                                  network='someOtherLAN',
+                                  logger=fake_logger)
+
     @patch.object(vmware.os, 'listdir')
     def test_list_images(self, fake_listdir):
         """``list_images`` - Returns a list of available WinServer versions that can be deployed"""
