@@ -23,6 +23,7 @@ DEFINED = OrderedDict([
             ('VLAB_MESSAGE_BROKER', environ.get('VLAB_MESSAGE_BROKER', 'winserver-broker')),
             ('VLAB_URL', environ.get('VLAB_URL', 'https://localhost')),
             ('VLAB_WINSERVER_IMAGES_DIR', environ.get('VLAB_WINSERVER_IMAGES_DIR', '/images')),
+            ('VLAB_VERIFY_TOKEN', environ.get('VLAB_VERIFY_TOKEN', False)),
           ])
 
 Constants = namedtuple('Constants', list(DEFINED.keys()))
