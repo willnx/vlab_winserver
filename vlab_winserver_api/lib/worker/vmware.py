@@ -28,7 +28,7 @@ def show_winserver(username):
         winserver_vms = {}
         for vm in folder.childEntity:
             info = virtual_machine.get_info(vcenter, vm)
-            if info['component'] == 'WinServer':
+            if info['meta']['component'] == 'WinServer':
                 winserver_vms[vm.name] = info
     return winserver_vms
 
@@ -53,7 +53,7 @@ def delete_winserver(username, machine_name, logger):
         for entity in folder.childEntity:
             if entity.name == machine_name:
                 info = virtual_machine.get_info(vcenter, entity)
-                if info['component'] == 'WinServer':
+                if info['meta']['component'] == 'WinServer':
                     logger.debug('powering off VM')
                     virtual_machine.power(entity, state='off')
                     delete_task = entity.Destroy_Task()
