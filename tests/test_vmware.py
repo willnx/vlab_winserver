@@ -21,20 +21,20 @@ class TestVMware(unittest.TestCase):
         fake_folder = MagicMock()
         fake_folder.childEntity = [fake_vm]
         fake_vCenter.return_value.__enter__.return_value.get_by_name.return_value = fake_folder
-        fake_get_info.return_value = {'component' : "WinServer",
-                                      'created': 1234,
-                                      'version': "2012R2",
-                                      'configured': False,
-                                      'generation': 1,
-                                     }
+        fake_get_info.return_value = {'meta' : {'component' : "WinServer",
+                                                'created': 1234,
+                                                'version': "2012R2",
+                                                'configured': False,
+                                                'generation': 1,
+                                                }}
 
         output = vmware.show_winserver(username='alice')
-        expected = {'WinServer': {'component' : "WinServer",
-                                  'created': 1234,
-                                  'version': "2012R2",
-                                  'configured': False,
-                                  'generation': 1,
-                                 }}
+        expected = {'WinServer': {'meta' : {'component' : "WinServer",
+                                                'created': 1234,
+                                                'version': "2012R2",
+                                                'configured': False,
+                                                'generation': 1,
+                                                }}}
 
         self.assertEqual(output, expected)
 
@@ -50,12 +50,12 @@ class TestVMware(unittest.TestCase):
         fake_folder = MagicMock()
         fake_folder.childEntity = [fake_vm]
         fake_vCenter.return_value.__enter__.return_value.get_by_name.return_value = fake_folder
-        fake_get_info.return_value = {'component' : "WinServer",
-                                      'created': 1234,
-                                      'version': "2012R2",
-                                      'configured': False,
-                                      'generation': 1,
-                                     }
+        fake_get_info.return_value = {'meta' : {'component' : "WinServer",
+                                                'created': 1234,
+                                                'version': "2012R2",
+                                                'configured': False,
+                                                'generation': 1,
+                                                }}
 
         output = vmware.delete_winserver(username='bob', machine_name='WinServerBox', logger=fake_logger)
         expected = None
