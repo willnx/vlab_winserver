@@ -18,7 +18,7 @@ logger = get_logger(__name__, loglevel=const.VLAB_WINSERVER_LOG_LEVEL)
 
 class WinServerView(MachineView):
     """API end point for managing instances of Microsoft Server"""
-    route_base = '/api/1/inf/winserver'
+    route_base = '/api/2/inf/winserver'
     RESOURCE = 'winserver'
     POST_SCHEMA = { "$schema": "http://json-schema.org/draft-04/schema#",
                     "type": "object",
@@ -82,7 +82,7 @@ class WinServerView(MachineView):
         body = kwargs['body']
         machine_name = body['name']
         image = body['image']
-        network = body['network']
+        network = '{}_{}'.format(username, body['network'])
         task = current_app.celery_app.send_task('winserver.create', [username, machine_name, image, network, txn_id])
         resp_data['content'] = {'task-id': task.id}
         resp = Response(ujson.dumps(resp_data))
