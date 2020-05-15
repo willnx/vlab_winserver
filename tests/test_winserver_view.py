@@ -77,6 +77,40 @@ class TestWinServerView(unittest.TestCase):
 
         self.assertEqual(task_id, expected)
 
+    def test_post_ip_config(self):
+        """WinServerView - POST accepts a ip config object"""
+        resp = self.app.post('/api/2/inf/winserver',
+                             headers={'X-Auth': self.token},
+                             json={'network': "someLAN",
+                                   'name': "myWinServerBox",
+                                   'image': "someVersion",
+                                   'ip-config': {'static-ip': '192.168.1.23',
+                                                 'default-gateway': '192.168.1.1',
+                                                 'netmask' : '255.255.255.0',
+                                                 'dns': ['192.168.1.1']}})
+
+        status = resp.status_code
+        expected = 202
+
+        self.assertEqual(status, expected)
+
+    def test_post_ip_config_bad(self):
+        """WinServerView - Invalid ip-config object resutlsin HTTP 400 response"""
+        resp = self.app.post('/api/2/inf/winserver',
+                             headers={'X-Auth': self.token},
+                             json={'network': "someLAN",
+                                   'name': "myWinServerBox",
+                                   'image': "someVersion",
+                                   'ip-config': {'static-ip': '10.10.1.23',
+                                                 'default-gateway': '192.168.1.1',
+                                                 'netmask' : '255.255.255.0',
+                                                 'dns': ['192.168.1.1']}})
+
+        status = resp.status_code
+        expected = 400
+
+        self.assertEqual(status, expected)
+
     def test_post_task_link(self):
         """WinServerView - POST on /api/2/inf/winserver sets the Link header"""
         resp = self.app.post('/api/2/inf/winserver',

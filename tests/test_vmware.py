@@ -11,6 +11,14 @@ from vlab_winserver_api.lib.worker import vmware
 class TestVMware(unittest.TestCase):
     """A set of test cases for the vmware.py module"""
 
+    @classmethod
+    def setUp(cls):
+        cls.ip_config = {'static-ip': '',
+                         'default-gateway': '192.168.1.1',
+                         'netmask': '255.255.255.0',
+                         'dns': ["192.168.1.1"]
+                        }
+
     @patch.object(vmware.virtual_machine, 'get_info')
     @patch.object(vmware, 'consume_task')
     @patch.object(vmware, 'vCenter')
@@ -97,6 +105,32 @@ class TestVMware(unittest.TestCase):
                                          machine_name='WinServerBox',
                                          image='1.0.0',
                                          network='someLAN',
+                                         ip_config=self.ip_config,
+                                         logger=fake_logger)
+        expected = {'WinServerBox': {'worked': True}}
+
+        self.assertEqual(output, expected)
+
+    @patch.object(vmware.virtual_machine, 'set_meta')
+    @patch.object(vmware, 'Ova')
+    @patch.object(vmware.virtual_machine, 'get_info')
+    @patch.object(vmware.virtual_machine, 'deploy_from_ova')
+    @patch.object(vmware, 'consume_task')
+    @patch.object(vmware, 'vCenter')
+    def test_create_winserver_static_ip(self, fake_vCenter, fake_consume_task, fake_deploy_from_ova, fake_get_info, fake_Ova, fake_set_meta):
+        """``create_winserver`` sets a static IP when provided with one"""
+        fake_logger = MagicMock()
+        fake_deploy_from_ova.return_value.name = 'WinServerBox'
+        fake_get_info.return_value = {'worked': True}
+        fake_Ova.return_value.networks = ['someLAN']
+        fake_vCenter.return_value.__enter__.return_value.networks = {'someLAN' : vmware.vim.Network(moId='1')}
+        self.ip_config['static-ip'] = '192.168.1.34'
+
+        output = vmware.create_winserver(username='alice',
+                                         machine_name='WinServerBox',
+                                         image='1.0.0',
+                                         network='someLAN',
+                                         ip_config=self.ip_config,
                                          logger=fake_logger)
         expected = {'WinServerBox': {'worked': True}}
 
@@ -119,6 +153,7 @@ class TestVMware(unittest.TestCase):
                                   machine_name='WinServerBox',
                                   image='1.0.0',
                                   network='someOtherLAN',
+                                  ip_config=self.ip_config,
                                   logger=fake_logger)
 
     @patch.object(vmware, 'Ova')
@@ -138,6 +173,7 @@ class TestVMware(unittest.TestCase):
                                   machine_name='WinServerBox',
                                   image='1.0.0',
                                   network='someOtherLAN',
+                                  ip_config=self.ip_config,
                                   logger=fake_logger)
 
     @patch.object(vmware.os, 'listdir')

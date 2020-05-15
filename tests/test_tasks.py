@@ -10,6 +10,14 @@ from vlab_winserver_api.lib.worker import tasks
 
 class TestTasks(unittest.TestCase):
     """A set of test cases for tasks.py"""
+    @classmethod
+    def setUp(cls):
+        cls.ip_config = {'static-ip': '',
+                         'default-gateway': '192.168.1.1',
+                         'netmask': '255.255.255.0',
+                         'dns': ["192.168.1.1"]
+                        }
+
     @patch.object(tasks, 'vmware')
     def test_show_ok(self, fake_vmware):
         """``show`` returns a dictionary when everything works as expected"""
@@ -39,6 +47,7 @@ class TestTasks(unittest.TestCase):
                               machine_name='winserverBox',
                               image='0.0.1',
                               network='someLAN',
+                              ip_config=self.ip_config,
                               txn_id='myId')
         expected = {'content' : {'worked': True}, 'error': None, 'params': {}}
 
@@ -53,6 +62,7 @@ class TestTasks(unittest.TestCase):
                               machine_name='winserverBox',
                               image='0.0.1',
                               network='someLAN',
+                              ip_config=self.ip_config,
                               txn_id='myId')
         expected = {'content' : {}, 'error': 'testing', 'params': {}}
 

@@ -38,7 +38,7 @@ def show(self, username, txn_id):
 
 
 @app.task(name='winserver.create', bind=True)
-def create(self, username, machine_name, image, network, txn_id):
+def create(self, username, machine_name, image, network, ip_config, txn_id):
     """Deploy a new instance of WinServer
 
     :Returns: Dictionary
@@ -55,6 +55,9 @@ def create(self, username, machine_name, image, network, txn_id):
     :param network: The name of the network to connect the new WinServer instance up to
     :type network: String
 
+    :param ip_config: The IPv4 network configuration for the WinServer instance
+    :type ip_config: Dictionary
+
     :param txn_id: A unique string supplied by the client to track the call through logs
     :type txn_id: String
     """
@@ -62,7 +65,7 @@ def create(self, username, machine_name, image, network, txn_id):
     resp = {'content' : {}, 'error': None, 'params': {}}
     logger.info('Task starting')
     try:
-        resp['content'] = vmware.create_winserver(username, machine_name, image, network, logger)
+        resp['content'] = vmware.create_winserver(username, machine_name, image, network, ip_config, logger)
     except ValueError as doh:
         logger.error('Task failed: {}'.format(doh))
         resp['error'] = '{}'.format(doh)

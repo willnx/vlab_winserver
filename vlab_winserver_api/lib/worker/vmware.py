@@ -64,7 +64,7 @@ def delete_winserver(username, machine_name, logger):
             raise ValueError('No {} named {} found'.format('winserver', machine_name))
 
 
-def create_winserver(username, machine_name, image, network, logger):
+def create_winserver(username, machine_name, image, network, ip_config, logger):
     """Deploy a new instance of WinServer
 
     :Returns: Dictionary
@@ -80,6 +80,9 @@ def create_winserver(username, machine_name, image, network, logger):
 
     :param network: The name of the network to connect the new WinServer instance up to
     :type network: String
+
+    :param ip_config: The IPv4 network configuration for the WinServer instance
+    :type ip_config: Dictionary
 
     :param logger: An object for logging messages
     :type logger: logging.LoggerAdapter
@@ -104,6 +107,17 @@ def create_winserver(username, machine_name, image, network, logger):
                                                      username, machine_name, logger)
         finally:
             ova.close()
+        if ip_config['static-ip']:
+            virtual_machine.config_static_ip(vcenter,
+                                             the_vm,
+                                             ip_config['static-ip'],
+                                             ip_config['default-gateway'],
+                                             ip_config['netmask'],
+                                             ip_config['dns'],
+                                             user='Administrator',
+                                             password='a',
+                                             logger=logger,
+                                             os='windows')
         meta_data = {'component' : "WinServer",
                      'created': time.time(),
                      'version': image,
