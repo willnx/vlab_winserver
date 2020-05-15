@@ -7,6 +7,7 @@ from flask import current_app
 from flask_classy import request, route, Response
 from vlab_inf_common.views import MachineView
 from vlab_inf_common.vmware import vCenter, vim
+from vlab_inf_common.input_validators import network_config_ok
 from vlab_api_common import describe, get_logger, requires, validate_input
 
 
@@ -35,7 +36,32 @@ class WinServerView(MachineView):
                         "network": {
                             "description": "The network to hook the WinServer instance up to",
                             "type": "string"
-                        }
+                        },
+                        "ip-config": {
+                            "description": "Supply to have a static IP configured. Otherwise, obtain a DHCP address",
+                            "type": "object",
+                            "properties": {
+                                "static-ip": {
+                                    "description": "The IPv4 address to assign to the VM",
+                                    "type": "string"
+                                },
+                                "default-gateway": {
+                                    "description": "The IPv4 address of the network default gateway",
+                                    "type": "string",
+                                    "default": "192.168.1.1"
+                                },
+                                "netmask":  {
+                                    "description": "The subnet mask for the network",
+                                    "type": "string",
+                                    "default": "255.255.255.0"
+                                },
+                                "dns": {
+                                    "description": "The IPv4 address(es) of DNS servers",
+                                    "type": "array",
+                                    "default": ["192.168.1.1"]
+                                },
+                            },
+                        },
                     },
                     "required": ["name", "image", "network"]
                   }
@@ -83,11 +109,17 @@ class WinServerView(MachineView):
         machine_name = body['name']
         image = body['image']
         network = '{}_{}'.format(username, body['network'])
-        task = current_app.celery_app.send_task('winserver.create', [username, machine_name, image, network, txn_id])
-        resp_data['content'] = {'task-id': task.id}
-        resp = Response(ujson.dumps(resp_data))
-        resp.status_code = 202
-        resp.headers.add('Link', '<{0}{1}/task/{2}>; rel=status'.format(const.VLAB_URL, self.route_base, task.id))
+        ip_config, error = _get_ip_config(body.get('ip-config', {}))
+        if error:
+            resp_data['error'] = error
+            resp = Response(ujson.dumps(resp_data))
+            resp.status_code = 400
+        else:
+            task = current_app.celery_app.send_task('winserver.create', [username, machine_name, image, network, ip_config, txn_id])
+            resp_data['content'] = {'task-id': task.id}
+            resp = Response(ujson.dumps(resp_data))
+            resp.status_code = 202
+            resp.headers.add('Link', '<{0}{1}/task/{2}>; rel=status'.format(const.VLAB_URL, self.route_base, task.id))
         return resp
 
     @requires(verify=const.VLAB_VERIFY_TOKEN, version=2)
@@ -119,3 +151,23 @@ class WinServerView(MachineView):
         resp.status_code = 202
         resp.headers.add('Link', '<{0}{1}/task/{2}>; rel=status'.format(const.VLAB_URL, self.route_base, task.id))
         return resp
+
+
+def _get_ip_config(supplied_config):
+    """Ensures API defaults are applied to object
+
+    :Returns: Tuple
+
+    :param supplied_config: The API params supplied by the user
+    :type supplied_config: Dictionary
+    """
+    error = ''
+    defaults = {'static-ip': '',
+                'default-gateway': '192.168.1.1',
+                'netmask': '255.255.255.0',
+                'dns': ["192.168.1.1"]
+               }
+    defaults.update(supplied_config)
+    if defaults['static-ip']:
+        error = network_config_ok(defaults['static-ip'], defaults['default-gateway'], defaults['netmask'])
+    return defaults, error
