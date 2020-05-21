@@ -108,6 +108,10 @@ def create_winserver(username, machine_name, image, network, ip_config, logger):
         finally:
             ova.close()
         if ip_config['static-ip']:
+            # Hack - The VM will walk through the C:\unattend.xml answer file
+            # and then reboot. We wont have valid login creds until after the
+            # reboot. Trying to *notice* the reboot is a race condition nightmare
+            time.sleep(300)
             virtual_machine.config_static_ip(vcenter,
                                              the_vm,
                                              ip_config['static-ip'],

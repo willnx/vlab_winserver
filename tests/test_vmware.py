@@ -111,13 +111,15 @@ class TestVMware(unittest.TestCase):
 
         self.assertEqual(output, expected)
 
+    @patch.object(vmware.time, 'sleep')
     @patch.object(vmware.virtual_machine, 'set_meta')
     @patch.object(vmware, 'Ova')
     @patch.object(vmware.virtual_machine, 'get_info')
     @patch.object(vmware.virtual_machine, 'deploy_from_ova')
     @patch.object(vmware, 'consume_task')
     @patch.object(vmware, 'vCenter')
-    def test_create_winserver_static_ip(self, fake_vCenter, fake_consume_task, fake_deploy_from_ova, fake_get_info, fake_Ova, fake_set_meta):
+    def test_create_winserver_static_ip(self, fake_vCenter, fake_consume_task,
+            fake_deploy_from_ova, fake_get_info, fake_Ova, fake_set_meta, fake_sleep):
         """``create_winserver`` sets a static IP when provided with one"""
         fake_logger = MagicMock()
         fake_deploy_from_ova.return_value.name = 'WinServerBox'
